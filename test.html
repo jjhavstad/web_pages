@@ -1,0 +1,225 @@
+
+<!DOCTYPE html>
+
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://www.paypalobjects.com/api/checkout.js"></script>
+    <link rel="stylesheet" href="checkout.css">
+</head>
+
+<body>
+
+<h2>WebSocket Test</h2>
+
+<button id="output">Send</div>
+
+<a id="venmo-pay" class="button js-button" role="button" href="venmo://venmore.link">venmopay</a>
+
+<script>
+    var startTime = 0;
+    document.getElementById('venmo-pay').addEventListener("click", function(e) {
+        requestOrderId();
+        startTime = Date.now();
+    });
+
+    function requestOrderId() {
+        const token = "PAYID-LVAMXNI15H26688T68737947";
+        initSocket(function(event) {
+            console.log(`Sending: ${token}`);
+            sendOrderId(token);
+            (async () => {
+                await setTimeout(sendHeartbeat, 1000);
+            })()
+        });
+    }
+
+    function sendHeartbeat() {
+        let now = Date.now();
+        let delta = now - startTime;
+        console.log(`Sending heartbeat at time: +${delta}`);
+        socket.send(now);
+        (async () => {
+            await setTimeout(sendHeartbeat, 1000);
+        })()
+    }
+
+    var socket;
+    function initSocket(onopen) {
+       socket = new WebSocket("wss://localhost:8002");
+
+       socket.onopen = onopen;
+
+       socket.onmessage = function(event) {
+         console.log(`Received: ${event.data}`);
+       };
+
+       socket.onclose = function(event) {
+         console.log('[close] Connection died');
+         (async () => {
+             await setTimeout(tryToReopenSocket(socket), 3000);
+         })()
+       };
+
+       socket.onerror = function(error) {
+         console.log(`[error] ${error.message}`);
+       };
+
+       return socket;
+    }
+
+    function tryToReopenSocket(socket) {
+       socket = initSocket(socket.onopen);
+    }
+
+    function sendOrderId(orderId) {
+        socket.send(orderId);
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('bg/serviceworker.js').then(function(registration) {
+          // Registration was successful
+          console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          document.getElementById('output').addEventListener('click', () => {
+            console.log("Button pressed");
+            registration.active.postMessage("Hello ServerWorker!");
+            navigator.serviceWorker.controller.postMessage("Hello ServerWorker!");
+          });
+        }, function(err) {
+          // registration failed :(
+          console.log('ServiceWorker registration failed: ', err);
+        });
+      });
+    }
+
+    navigator.serviceWorker.addEventListener('message', function(event) {
+      console.log(`Server: Received message ${event.data}`);
+    });
+
+    navigator.serviceWorker.ready.then(() => {
+      console.log("ServiceWorker ready!");
+      navigator.serviceWorker.controller.postMessage("Hello ServerWorker!");
+    });
+
+    <!--var wsUri = "wss://echo.websocket.org/";-->
+    <!--var output;-->
+
+    <!--function init()-->
+    <!--{-->
+        <!--output = document.getElementById("output");-->
+        <!--testWebSocket();-->
+    <!--}-->
+
+    <!--function testWebSocket()-->
+    <!--{-->
+        <!--websocket = new WebSocket(wsUri);-->
+        <!--websocket.onopen = function(evt) { onOpen(evt) };-->
+        <!--websocket.onclose = function(evt) { onClose(evt) };-->
+        <!--websocket.onmessage = function(evt) { onMessage(evt) };-->
+        <!--websocket.onerror = function(evt) { onError(evt) };-->
+    <!--}-->
+
+    <!--function onOpen(evt)-->
+    <!--{-->
+        <!--writeToScreen("CONNECTED");-->
+        <!--doSend("WebSocket rocks");-->
+    <!--}-->
+
+    <!--function onClose(evt)-->
+    <!--{-->
+        <!--writeToScreen("DISCONNECTED");-->
+    <!--}-->
+
+    <!--function onMessage(evt)-->
+    <!--{-->
+        <!--writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data+'</span>');-->
+        <!--websocket.close();-->
+    <!--}-->
+
+    <!--function onError(evt)-->
+    <!--{-->
+        <!--writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);-->
+    <!--}-->
+
+    <!--function doSend(message)-->
+    <!--{-->
+        <!--writeToScreen("SENT: " + message);-->
+        <!--websocket.send(message);-->
+    <!--}-->
+
+    <!--function writeToScreen(message)-->
+    <!--{-->
+        <!--var pre = document.createElement("p");-->
+        <!--pre.style.wordWrap = "break-word";-->
+        <!--pre.innerHTML = message;-->
+        <!--output.appendChild(pre);-->
+    <!--}-->
+
+    <!--window.addEventListener("load", init, false);-->
+
+    <!--let socket = new WebSocket("wss://localhost:8000");-->
+
+    <!--socket.onopen = function(e) {-->
+      <!--alert("[open] Connection established");-->
+      <!--alert("Sending to server");-->
+      <!--socket.send("My name is John");-->
+    <!--};-->
+
+    <!--socket.onmessage = function(event) {-->
+      <!--alert(`[message] Data received from server: ${event.data}`);-->
+    <!--};-->
+
+    <!--socket.onclose = function(event) {-->
+      <!--if (event.wasClean) {-->
+        <!--alert(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);-->
+      <!--} else {-->
+        <!--// e.g. server process killed or network down-->
+        <!--// event.code is usually 1006 in this case-->
+        <!--alert('[close] Connection died');-->
+      <!--}-->
+    <!--};-->
+
+    <!--socket.onerror = function(error) {-->
+      <!--alert(`[error] ${error.message}`);-->
+    <!--};-->
+
+   <!--document.getElementById("myBtn").addEventListener("click", function(e) {-->
+    <!--console.log("Start order request to PayPal");-->
+   <!--});-->
+
+    <!--paypal.Button.render({-->
+
+        <!--env: 'sandbox', // sandbox | production-->
+
+        <!--// PayPal Client IDs - replace with your own-->
+        <!--// Create a PayPal app: https://developer.paypal.com/developer/applications/create-->
+        <!--client: {-->
+            <!--sandbox:    'AZDxjDScFpQtjWTOUtWKbyN_bDt4OgqaF4eYXlewfBP4-8aqX3PiV8e1GWU6liB2CUXlkA59kJXE7M6R',-->
+            <!--production: '<insert production client id>'-->
+        <!--},-->
+
+        <!--// Show the buyer a 'Pay Now' button in the checkout flow-->
+        <!--commit: true,-->
+
+        <!--// payment() is called when the button is clicked-->
+        <!--payment: function(data, actions) {-->
+            <!--return actions.order.create({-->
+                <!--order: { purchase_units: [{amount: {currency_code: "USD", value: '0.01'}}] }-->
+            <!--}).then(function(orderId) {-->
+
+            <!--});-->
+        <!--},-->
+
+        <!--// onAuthorize() is called when the buyer approves the payment-->
+        <!--onAuthorize: function(data, actions) {-->
+            <!--// Make a call to the REST api to execute the payment-->
+            <!--return actions.payment.execute().then(function() {-->
+                <!--window.alert('Payment Complete!');-->
+            <!--});-->
+        <!--}-->
+
+    <!--}, '#paypal-button-container');-->
+
+    </script>
+</body>

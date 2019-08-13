@@ -1,0 +1,25 @@
+.button {
+  background-color: #3D95CE;
+  border-radius: 5px;
+  color: #FFFFFF;
+  padding: .5em;
+  text-decoration: none;
+  font-style: italic;
+  fontFamily: Helvetica Neue,Helvetica,Arial,sans-serif
+}
+
+.button:focus,
+.button:hover {
+  background-color: #6FB4E0;
+  color: White;
+}
+
+.content {
+  display: none;
+  margin: 1em 0;
+}
+
+.content.active,
+.no-js .content {
+  display: block;
+}
